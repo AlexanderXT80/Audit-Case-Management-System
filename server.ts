@@ -1,6 +1,6 @@
 import express from "express";
 import path from "path";
-import fs from "fs";
+import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
@@ -40,7 +40,6 @@ const app = express();
 app.use(express.json());
 
 const PORT = 3000;
-const DB_PATH = path.join(process.cwd(), "db.json");
 
 // Initialize Gemini SDK if API key is present
 const geminiApiKey = process.env.GEMINI_API_KEY;
@@ -56,7 +55,7 @@ if (geminiApiKey) {
   });
 }
 
-// Global state / session holder in-memory (and persisted to db.json)
+// Global state / session holder in-memory
 let db: DatabaseSchema = {
   users: [],
   taxpayers: [],
@@ -599,21 +598,111 @@ function ensureAppealsSeeded() {
   console.log("Appeals seeded successfully!");
 }
 
-function loadDb() {
-  if (fs.existsSync(DB_PATH)) {
-    try {
-      const content = fs.readFileSync(DB_PATH, "utf-8");
-      db = JSON.parse(content);
-      ensureAppealsSeeded();
-      ensureSystemConfigSeeded();
-    } catch (e) {
-      console.error("Failed to parse db.json, re-seeding database...", e);
-      seedDatabase();
-    }
-  } else {
-    console.log("db.json not found, seeding...");
-    seedDatabase();
+function toSnakeCase(key: string) {
+  return key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+}
+
+function toCamelCase(key: string) {
+  return key.replace(/_([a-z])/g, (_, char) => char.toUpperCase());
+}
+
+function convertKeys<T>(input: any, converter: (key: string) => string): any {
+  if (input === null || input === undefined) return input;
+  if (Array.isArray(input)) return input.map((item) => convertKeys(item, converter));
+  if (typeof input === "object") {
+    return Object.entries(input).reduce((acc, [key, value]) => {
+      acc[converter(key)] = convertKeys(value, converter);
+      return acc;
+    }, {} as Record<string, any>);
   }
+  return input;
+}
+
+async function loadDbFromSupabase() {
+  if (!supabase) return false;
+
+  const tableKeys: Record<string, string> = {
+    users: "id",
+    taxpayers: "tin",
+    risk_assessments: "id",
+    audit_cases: "id",
+    case_stage_history: "id",
+    document_requests: "id",
+    evidence_documents: "id",
+    findings: "id",
+    assessments: "id",
+    approvals: "id",
+    appeals: "id",
+    audit_log: "id"
+  };
+
+  const tableNames = Object.keys(tableKeys);
+  const loadPromises = tableNames.map(async (tableName) => {
+    const { data, error } = await supabase!.from(tableName).select("*");
+    if (error) {
+      throw error;
+    }
+    return { tableName, data: data || [] };
+  });
+
+  const rows = await Promise.all(loadPromises);
+
+  for (const { tableName, data } of rows) {
+    const camelTable = tableName.replace(/_([a-z])/g, (_, char) => char.toUpperCase());
+    const normalized = (data as any[]).map((row) => convertKeys(row, toCamelCase));
+    (db as any)[camelTable] = normalized;
+  }
+
+  ensureAppealsSeeded();
+  ensureSystemConfigSeeded();
+  return true;
+}
+
+async function persistDbToSupabase() {
+  if (!supabase) return;
+  const mappings: Array<{ tableName: string; rows: any[]; key: string }> = [
+    { tableName: "users", rows: db.users, key: "id" },
+    { tableName: "taxpayers", rows: db.taxpayers, key: "tin" },
+    { tableName: "risk_assessments", rows: db.riskAssessments, key: "id" },
+    { tableName: "audit_cases", rows: db.auditCases, key: "id" },
+    { tableName: "case_stage_history", rows: db.caseStageHistory, key: "id" },
+    { tableName: "document_requests", rows: db.documentRequests, key: "id" },
+    { tableName: "evidence_documents", rows: db.evidenceDocuments, key: "id" },
+    { tableName: "findings", rows: db.findings, key: "id" },
+    { tableName: "assessments", rows: db.assessments, key: "id" },
+    { tableName: "approvals", rows: db.approvals, key: "id" },
+    { tableName: "appeals", rows: db.appeals, key: "id" },
+    { tableName: "audit_log", rows: db.auditLog, key: "id" }
+  ];
+
+  const chunkSize = 50;
+  for (const { tableName, rows, key } of mappings) {
+    const snakeRows = rows.map((row) => convertKeys(row, toSnakeCase));
+    for (let i = 0; i < snakeRows.length; i += chunkSize) {
+      const chunk = snakeRows.slice(i, i + chunkSize) as any[];
+      const { error } = await (supabase as any).from(tableName).upsert(chunk, { onConflict: key });
+      if (error) {
+        console.error(`Supabase upsert failed for ${tableName}:`, error);
+        return;
+      }
+    }
+  }
+}
+
+async function initializeDatabase() {
+  if (supabase) {
+    try {
+      const loaded = await loadDbFromSupabase();
+      if (loaded) {
+        console.log("Loaded database state from Supabase.");
+        return;
+      }
+    } catch (error) {
+      console.error("Failed to load data from Supabase. Falling back to memory seed:", error);
+    }
+  }
+
+  seedDatabase();
 }
 
 function ensureSystemConfigSeeded() {
@@ -634,15 +723,17 @@ function ensureSystemConfigSeeded() {
 }
 
 function saveToDb() {
-  try {
-    fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2), "utf-8");
-  } catch (e) {
-    console.error("Failed to save db.json", e);
+  if (!supabase) {
+    console.warn("Supabase client unavailable. Changes will remain in memory only.");
+    return;
   }
+
+  void persistDbToSupabase().catch((error) => {
+    console.error("Failed to persist data to Supabase:", error);
+  });
 }
 
-// Initial DB Load
-loadDb();
+// Initial DB Load is handled during server startup
 
 // Active user session getter
 function getActingUser(): User {
@@ -844,6 +935,20 @@ function requestStageTransition(
 // ----------------------------------------
 // API ENDPOINTS
 // ----------------------------------------
+
+app.use("/api", async (req, res, next) => {
+  if (!supabase) {
+    return res.status(500).json({ error: "Supabase client unavailable." });
+  }
+
+  try {
+    await loadDbFromSupabase();
+    next();
+  } catch (error) {
+    console.error("Failed to refresh Supabase data for API request:", error);
+    res.status(500).json({ error: "Failed to refresh Supabase data." });
+  }
+});
 
 // Endpoint to serve Alexander Chikumba's avatar directly
 app.get(["/src/assets/images/alexander_chikumba_avatar_1783949039404.jpg", "/assets/images/alexander_chikumba_avatar_1783949039404.jpg"], (req, res) => {
@@ -1731,6 +1836,8 @@ Ensure the "rawOutput" is a valid string representation of a JSON object. Return
 
 // Setup Vite & Static Assets
 async function startServer() {
+  await initializeDatabase();
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -1750,4 +1857,9 @@ async function startServer() {
   });
 }
 
-startServer();
+const isVercel = process.env.VERCEL === "1";
+if (!isVercel) {
+  startServer();
+}
+
+export default app;

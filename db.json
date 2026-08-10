@@ -785,6 +785,42 @@
   ],
   "auditLog": [
     {
+      "id": "log-1786370088356-498",
+      "action": "LOGOUT",
+      "performedBy": "Alexander Chikumba",
+      "role": "AUDITOR",
+      "timestamp": "2026-08-10T13:54:48.356Z",
+      "ip": "10.12.44.15",
+      "details": "User logged out of governance terminal."
+    },
+    {
+      "id": "log-1786368974059-630",
+      "action": "LOGIN",
+      "performedBy": "Alexander Chikumba",
+      "role": "AUDITOR",
+      "timestamp": "2026-08-10T13:36:14.059Z",
+      "ip": "10.12.44.15",
+      "details": "Logged in as Alexander Chikumba"
+    },
+    {
+      "id": "log-1786368712276-486",
+      "action": "LOGOUT",
+      "performedBy": "Alexander Chikumba",
+      "role": "AUDITOR",
+      "timestamp": "2026-08-10T13:31:52.276Z",
+      "ip": "10.12.44.15",
+      "details": "User logged out of governance terminal."
+    },
+    {
+      "id": "log-1786368702274-289",
+      "action": "LOGIN",
+      "performedBy": "Alexander Chikumba",
+      "role": "AUDITOR",
+      "timestamp": "2026-08-10T13:31:42.274Z",
+      "ip": "10.12.44.15",
+      "details": "Logged in as Alexander Chikumba"
+    },
+    {
       "id": "log-1786367346748-4",
       "action": "LOGIN",
       "performedBy": "Chikondi Phiri",
