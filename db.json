@@ -785,6 +785,33 @@
   ],
   "auditLog": [
     {
+      "id": "log-1786367346748-4",
+      "action": "LOGIN",
+      "performedBy": "Chikondi Phiri",
+      "role": "AUDITOR",
+      "timestamp": "2026-08-10T13:09:06.748Z",
+      "ip": "10.12.44.15",
+      "details": "Logged in as Chikondi Phiri"
+    },
+    {
+      "id": "log-1786357938440-537",
+      "action": "LOGOUT",
+      "performedBy": "Alexander Chikumba",
+      "role": "AUDITOR",
+      "timestamp": "2026-08-10T10:32:18.440Z",
+      "ip": "10.12.44.15",
+      "details": "User logged out of governance terminal."
+    },
+    {
+      "id": "log-1786357929166-591",
+      "action": "LOGIN",
+      "performedBy": "Alexander Chikumba",
+      "role": "AUDITOR",
+      "timestamp": "2026-08-10T10:32:09.166Z",
+      "ip": "10.12.44.15",
+      "details": "Logged in as Alexander Chikumba"
+    },
+    {
       "id": "log-1785919521633-842",
       "action": "LOGOUT",
       "performedBy": "Alexander Chikumba",

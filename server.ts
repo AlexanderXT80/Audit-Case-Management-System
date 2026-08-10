@@ -4,6 +4,7 @@ import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
+import { createClient } from '@supabase/supabase-js';
 import { 
   UserRole, 
   CaseStage, 
@@ -23,6 +24,17 @@ import {
 } from "./src/types.js"; // Use js extension for ESM compatibility
 
 dotenv.config();
+
+// Initialize Supabase admin client for server-side operations (uses service_role key)
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE;
+export let supabase: ReturnType<typeof createClient> | null = null;
+if (SUPABASE_URL && SUPABASE_SERVICE_ROLE) {
+  supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE, { auth: { persistSession: false } });
+  console.log('Supabase admin client initialized (server-side).');
+} else {
+  console.warn('Supabase admin client NOT initialized: SUPABASE_URL or SUPABASE_SERVICE_ROLE missing.');
+}
 
 const app = express();
 app.use(express.json());
