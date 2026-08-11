@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
+import cors from "cors";
 import { createClient } from '@supabase/supabase-js';
 import { 
   UserRole, 
@@ -37,6 +38,12 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE) {
 }
 
 const app = express();
+app.use(cors({
+  origin: [
+    "https://audit-case-management-system.vercel.app"
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -953,6 +960,15 @@ app.use("/api", async (req, res, next) => {
 // Endpoint to serve Alexander Chikumba's avatar directly
 app.get(["/src/assets/images/alexander_chikumba_avatar_1783949039404.jpg", "/assets/images/alexander_chikumba_avatar_1783949039404.jpg"], (req, res) => {
   res.sendFile(path.join(process.cwd(), "src/assets/images/alexander_chikumba_avatar_1783949039404.jpg"));
+});
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "ok",
+    service: "Audit Case Management Governance Server",
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Auth Enpoints
