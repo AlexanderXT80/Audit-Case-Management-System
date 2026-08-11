@@ -10,6 +10,7 @@ import {
   Appeal,
   SystemConfig
 } from "./types.js";
+import { apiFetch } from "./lib/api";
 
 import Sidebar from "./components/Sidebar.js";
 import Header from "./components/Header.js";
@@ -244,7 +245,7 @@ export default function App() {
       setError(null);
 
       // 1. Load active user session
-      const authRes = await fetch("/api/auth/me");
+      const authRes = await apiFetch("/api/auth/me");
       if (!authRes.ok) throw new Error("Could not authenticate current session.");
       const authData = await authRes.json();
       setAllUsers(authData.allUsers || []);
@@ -253,12 +254,12 @@ export default function App() {
 
       // 2. Load lists with a minimum delay to allow the beautiful loader to show
       const [casesRes, approvalsRes, logsRes, findingsRes, evidenceRes, appealsRes] = await Promise.all([
-        fetch("/api/cases").then(r => r.json()),
-        fetch("/api/approvals").then(r => r.json()),
-        fetch("/api/audit-logs").then(r => r.json()),
-        fetch("/api/findings").then(r => r.json()),
-        fetch("/api/evidence").then(r => r.json()),
-        fetch("/api/appeals").then(r => r.json()),
+        apiFetch("/api/cases").then(r => r.json()),
+        apiFetch("/api/approvals").then(r => r.json()),
+        apiFetch("/api/audit-logs").then(r => r.json()),
+        apiFetch("/api/findings").then(r => r.json()),
+        apiFetch("/api/evidence").then(r => r.json()),
+        apiFetch("/api/appeals").then(r => r.json()),
         new Promise(resolve => setTimeout(resolve, 3500)) // 3.5 seconds initial page boot delay
       ]);
 
@@ -280,7 +281,7 @@ export default function App() {
       // 3. Derive risk assessments from existing cases and mock database
       // The risk scoring is posted by the Python model or simulated in settings
       // We will read taxpayers to match them
-      const taxpayersRes = await fetch("/api/taxpayers");
+      const taxpayersRes = await apiFetch("/api/taxpayers");
       if (taxpayersRes.ok) {
         // We'll simulate fetching from our settings database
         // Wait, we can fetch on-demand riskAssessments. For ease, we call settings
@@ -310,12 +311,12 @@ export default function App() {
   const refreshData = async () => {
     try {
       const [casesRes, approvalsRes, logsRes, findingsRes, evidenceRes, appealsRes] = await Promise.all([
-        fetch("/api/cases").then(r => r.json()),
-        fetch("/api/approvals").then(r => r.json()),
-        fetch("/api/audit-logs").then(r => r.json()),
-        fetch("/api/findings").then(r => r.json()),
-        fetch("/api/evidence").then(r => r.json()),
-        fetch("/api/appeals").then(r => r.json())
+        apiFetch("/api/cases").then(r => r.json()),
+        apiFetch("/api/approvals").then(r => r.json()),
+        apiFetch("/api/audit-logs").then(r => r.json()),
+        apiFetch("/api/findings").then(r => r.json()),
+        apiFetch("/api/evidence").then(r => r.json()),
+        apiFetch("/api/appeals").then(r => r.json())
       ]);
       setCases(casesRes || []);
       setApprovals(approvalsRes || []);
@@ -337,7 +338,7 @@ export default function App() {
   const handleSwitchUser = async (userId: string, role: UserRole) => {
     try {
       setLoading(true);
-      const res = await fetch("/api/auth/set-role", {
+      const res = await apiFetch("/api/auth/set-role", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, role })
@@ -346,7 +347,7 @@ export default function App() {
         const data = await res.json();
         setActiveRole(data.activeRole);
         // Reload Auth status
-        const authRes = await fetch("/api/auth/me");
+        const authRes = await apiFetch("/api/auth/me");
         const authData = await authRes.json();
         setCurrentUser(authData.user);
         if (data.activeRole === UserRole.SUPERVISOR) {
@@ -397,7 +398,7 @@ export default function App() {
     await new Promise(r => setTimeout(r, 600));
     
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await apiFetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: selectedLoginUser.id })
@@ -448,7 +449,7 @@ export default function App() {
     
     if (match) {
       try {
-        const res = await fetch("/api/auth/login", {
+        const res = await apiFetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: match.id })
@@ -486,7 +487,7 @@ export default function App() {
 
   const handleLogin = async (userId: string) => {
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await apiFetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId })
@@ -516,7 +517,7 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
-      const res = await fetch("/api/auth/logout", {
+      const res = await apiFetch("/api/auth/logout", {
         method: "POST"
       });
       if (res.ok) {
@@ -532,7 +533,7 @@ export default function App() {
   // Load detailed single case context
   const handleFetchCaseDetail = async (caseId: string) => {
     try {
-      const res = await fetch(`/api/cases/${caseId}`);
+      const res = await apiFetch(`/api/cases/${caseId}`);
       if (res.ok) {
         const data = await res.json();
         setSelectedCaseDetail(data);
@@ -564,7 +565,7 @@ export default function App() {
     }
 
     try {
-      const res = await fetch("/api/cases", {
+      const res = await apiFetch("/api/cases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -598,7 +599,7 @@ export default function App() {
   const handleTransitionStage = async (toStage: CaseStage, notes: string) => {
     if (!selectedCaseId) return;
     try {
-      const res = await fetch(`/api/cases/${selectedCaseId}/stage`, {
+      const res = await apiFetch(`/api/cases/${selectedCaseId}/stage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ toStage, notes })
@@ -620,7 +621,7 @@ export default function App() {
 
   const handleTransitionStageForReview = async (caseId: string, toStage: CaseStage, notes: string) => {
     try {
-      const res = await fetch(`/api/cases/${caseId}/stage`, {
+      const res = await apiFetch(`/api/cases/${caseId}/stage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ toStage, notes })
@@ -643,7 +644,7 @@ export default function App() {
   // Assign lead auditor from selection/triage
   const handleAssignAuditor = async (caseId: string, auditorId: string) => {
     try {
-      const res = await fetch(`/api/cases/${caseId}/assign`, {
+      const res = await apiFetch(`/api/cases/${caseId}/assign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ auditorId })
@@ -660,7 +661,7 @@ export default function App() {
   // Reject / Dismiss Case from triage
   const handleRejectCase = async (caseId: string, notes: string) => {
     try {
-      const res = await fetch(`/api/cases/${caseId}/stage`, {
+      const res = await apiFetch(`/api/cases/${caseId}/stage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ toStage: CaseStage.REJECTED, notes })
@@ -683,7 +684,7 @@ export default function App() {
   const handleCreateDocumentRequest = async (description: string, dueDate: string) => {
     if (!selectedCaseId) return;
     try {
-      const res = await fetch(`/api/cases/${selectedCaseId}/documents`, {
+      const res = await apiFetch(`/api/cases/${selectedCaseId}/documents`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ description, dueDate })
@@ -700,7 +701,7 @@ export default function App() {
   const handleToggleDocumentStatus = async (docId: string, status: "PENDING" | "RECEIVED") => {
     if (!selectedCaseId) return;
     try {
-      const res = await fetch(`/api/cases/${selectedCaseId}/documents/${docId}/status`, {
+      const res = await apiFetch(`/api/cases/${selectedCaseId}/documents/${docId}/status`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status })
@@ -718,7 +719,7 @@ export default function App() {
   const handleUploadEvidence = async (name: string, requestId: string | null, fileSize: string, fileType: string) => {
     if (!selectedCaseId) return;
     try {
-      const res = await fetch(`/api/cases/${selectedCaseId}/evidence/upload`, {
+      const res = await apiFetch(`/api/cases/${selectedCaseId}/evidence/upload`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, requestId, fileSize, fileType })
@@ -736,7 +737,7 @@ export default function App() {
   const handleLogFinding = async (description: string, amount: number) => {
     if (!selectedCaseId) return;
     try {
-      const res = await fetch(`/api/cases/${selectedCaseId}/findings`, {
+      const res = await apiFetch(`/api/cases/${selectedCaseId}/findings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ description, amount })
@@ -754,7 +755,7 @@ export default function App() {
   const handleUpdateFinding = async (findingId: string, description: string, amount: number) => {
     if (!selectedCaseId) return;
     try {
-      const res = await fetch(`/api/cases/${selectedCaseId}/findings/${findingId}`, {
+      const res = await apiFetch(`/api/cases/${selectedCaseId}/findings/${findingId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ description, amount })
@@ -772,7 +773,7 @@ export default function App() {
   const handleCreateAssessment = async (tax: number, penalty: number, interest: number, findingsRef: string[], notes: string) => {
     if (!selectedCaseId) return;
     try {
-      const res = await fetch(`/api/cases/${selectedCaseId}/assessment`, {
+      const res = await apiFetch(`/api/cases/${selectedCaseId}/assessment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ taxAmount: tax, penaltyAmount: penalty, interestAmount: interest, findingsRef, notes })
@@ -789,7 +790,7 @@ export default function App() {
   // Approve / Reject Decision Gating
   const handleDecideApproval = async (id: string, decision: "APPROVED" | "REJECTED", decisionNotes: string) => {
     try {
-      const res = await fetch(`/api/approvals/${id}/decide`, {
+      const res = await apiFetch(`/api/approvals/${id}/decide`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ decision, decisionNotes })
@@ -814,7 +815,7 @@ export default function App() {
 
   // Admin account & config handlers
   const handleAdminCreateUser = async (user: { name: string; email: string; role: UserRole }) => {
-    const res = await fetch("/api/admin/users", {
+    const res = await apiFetch("/api/admin/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(user)
@@ -827,7 +828,7 @@ export default function App() {
     showToast(`Successfully created staff account "${data.user.name}".`, "success");
     
     // Refresh all users list
-    const authRes = await fetch("/api/auth/me");
+    const authRes = await apiFetch("/api/auth/me");
     if (authRes.ok) {
       const authData = await authRes.json();
       setAllUsers(authData.allUsers || []);
@@ -836,7 +837,7 @@ export default function App() {
   };
 
   const handleAdminUpdateUser = async (userId: string, updates: Partial<User>) => {
-    const res = await fetch(`/api/admin/users/${userId}`, {
+    const res = await apiFetch(`/api/admin/users/${userId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updates)
@@ -848,7 +849,7 @@ export default function App() {
     const data = await res.json();
     
     // Refresh all users list
-    const authRes = await fetch("/api/auth/me");
+    const authRes = await apiFetch("/api/auth/me");
     if (authRes.ok) {
       const authData = await authRes.json();
       setAllUsers(authData.allUsers || []);
@@ -860,7 +861,7 @@ export default function App() {
   };
 
   const handleAdminBulkAction = async (userIds: string[], action: "deactivate" | "activate" | "assign-role", role?: UserRole) => {
-    const res = await fetch("/api/admin/users/bulk", {
+    const res = await apiFetch("/api/admin/users/bulk", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userIds, action, role })
@@ -871,7 +872,7 @@ export default function App() {
     }
     
     // Refresh all users list
-    const authRes = await fetch("/api/auth/me");
+    const authRes = await apiFetch("/api/auth/me");
     if (authRes.ok) {
       const authData = await authRes.json();
       setAllUsers(authData.allUsers || []);

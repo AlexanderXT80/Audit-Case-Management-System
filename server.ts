@@ -39,7 +39,7 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE) {
 const app = express();
 app.use(express.json());
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 // Initialize Gemini SDK if API key is present
 const geminiApiKey = process.env.GEMINI_API_KEY;

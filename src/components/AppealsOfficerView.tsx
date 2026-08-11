@@ -8,6 +8,7 @@ import {
   UserRole,
   CaseStage
 } from "../types";
+import { apiFetch } from "../lib/api";
 import { 
   Scale, 
   FileText, 
@@ -68,7 +69,7 @@ export default function AppealsOfficerView({
   const fetchCaseDetail = async (caseId: string) => {
     try {
       setLoadingCaseDetail(true);
-      const res = await fetch(`/api/cases/${caseId}`);
+      const res = await apiFetch(`/api/cases/${caseId}`);
       if (res.ok) {
         const data = await res.json();
         setSelectedCaseDetail(data);
@@ -116,7 +117,7 @@ export default function AppealsOfficerView({
 
     try {
       setSubmittingDecision(true);
-      const res = await fetch(`/api/appeals/${selectedCaseDetail.appeal.id}/decide`, {
+      const res = await apiFetch(`/api/appeals/${selectedCaseDetail.appeal.id}/decide`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ outcome, resolverNotes: justification })

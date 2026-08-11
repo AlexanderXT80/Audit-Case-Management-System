@@ -17,6 +17,7 @@ import {
   Database
 } from "lucide-react";
 import { generateReasoningHash, runRiskAnalysisModel } from "../models/riskAnalysisModel";
+import { apiFetch } from "../lib/api";
 
 interface SettingsViewProps {
   onTriggerIntake: (payload: {
@@ -191,7 +192,7 @@ export default function SettingsView({ onTriggerIntake }: SettingsViewProps) {
       });
 
       // Submit directly to backend Intake API
-      const intakeRes = await fetch("/api/risk/intake", {
+      const intakeRes = await apiFetch("/api/risk/intake", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
