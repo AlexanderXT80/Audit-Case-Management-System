@@ -8,6 +8,7 @@ interface HeaderProps {
   allUsers: User[];
   onSwitchUser: (userId: string, role: UserRole) => void;
   onLogout: () => void;
+  onMenuToggle?: () => void;
   title: string;
 }
 
@@ -17,14 +18,27 @@ export default function Header({
   allUsers,
   onSwitchUser,
   onLogout,
+  onMenuToggle,
   title,
 }: HeaderProps) {
   const [showDropdown, setShowDropdown] = React.useState(false);
 
   return (
-    <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 sticky top-0 z-40" id="cms-header">
-      <div className="flex items-center gap-3">
-        <h1 className="text-xl font-bold tracking-tight text-gray-900" id="header-title">
+    <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40" id="cms-header">
+      <div className="flex items-center gap-3 min-w-0">
+        <button
+          type="button"
+          onClick={onMenuToggle}
+          className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-sm hover:bg-gray-50"
+          aria-label="Toggle navigation"
+        >
+          <span className="sr-only">Toggle navigation</span>
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M3 6h18M3 12h18M3 18h18" />
+          </svg>
+        </button>
+
+        <h1 className="text-lg sm:text-xl font-bold tracking-tight text-gray-900 truncate" id="header-title">
           {title}
         </h1>
         <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-800">

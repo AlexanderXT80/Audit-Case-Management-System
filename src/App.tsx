@@ -219,6 +219,7 @@ export default function App() {
 
   // Toast / Feedback banners
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     document.title = "Audit Case Management System";
@@ -1032,7 +1033,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex bg-slate-100 min-h-screen text-slate-800 font-sans" id="governance-app">
+    <div className="flex min-h-screen bg-slate-100 text-slate-800 font-sans" id="governance-app">
       {/* Dynamic Toast feedback */}
       {toast && (
         <div className="fixed top-5 right-5 z-50 animate-in slide-in-from-top-12 duration-300" id="global-toast">
@@ -1057,6 +1058,7 @@ export default function App() {
           // If returning to cases tab, clear active detail to show table list again!
           if (tab === "cases") setSelectedCaseId(null);
           transitionToTab(tab);
+          setMobileSidebarOpen(false);
         }}
         onOpenNewCaseModal={() => setIsNewCaseModalOpen(true)}
         casesInTriageCount={casesInTriageCount}
@@ -1064,6 +1066,8 @@ export default function App() {
         casesInReviewCount={casesInReviewCount}
         myPendingApprovalsCount={myPendingApprovalsCount}
         activeRole={activeRole}
+        isMobileOpen={mobileSidebarOpen}
+        onMobileClose={() => setMobileSidebarOpen(false)}
       />
 
       {/* Content pane */}
@@ -1075,6 +1079,7 @@ export default function App() {
           allUsers={allUsers}
           onSwitchUser={handleSwitchUser}
           onLogout={handleLogout}
+          onMenuToggle={() => setMobileSidebarOpen((prev) => !prev)}
           title={
             currentTab === "dashboard" ? (activeRole === UserRole.AUDITOR ? "Auditor Dashboard" : "Supervisor Dashboard") :
             currentTab === "selection" ? (activeRole === UserRole.SUPERVISOR ? "Case Triage" : "Case Selection & Triage") :
@@ -1088,7 +1093,7 @@ export default function App() {
         />
 
         {/* Dynamic Inner Space */}
-        <main className="p-6 max-w-7xl w-full mx-auto flex-1">
+        <main className="p-3 sm:p-4 lg:p-6 max-w-7xl w-full mx-auto flex-1">
           {tabLoading ? (
             <div className="flex flex-col items-center justify-center min-h-[480px] bg-white rounded-2xl border border-gray-200/80 shadow-sm p-12 text-center animate-in fade-in duration-300" id="tab-loading-indicator">
               <div className="relative mb-6">
