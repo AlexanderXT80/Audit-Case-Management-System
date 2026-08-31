@@ -1,6 +1,0 @@
-{
-  "name": "Audit Case Management System",
-  "description": "Full-lifecycle automated tax audit case management system with risk ingestion, supervisor gating, evidence tracking, findings logs, and appeals handling.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
