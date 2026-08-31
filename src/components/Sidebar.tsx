@@ -7,10 +7,10 @@ import {
   FileSearch, 
   Sliders, 
   Users2, 
-  HelpCircle,
   Plus,
   ShieldCheck,
-  Scale
+  Scale,
+  X
 } from "lucide-react";
 import { UserRole } from "../types";
 
